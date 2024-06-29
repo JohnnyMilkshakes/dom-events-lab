@@ -24,8 +24,14 @@ calculator.addEventListener("click", (event) => {
         num2 = "";
   } else if (event.target.classList.contains("number")) {
         if (display.innerText === "Error") {
-        display.innerText = "";
+            display.innerText = "";
         }
+
+        if (display.innerText === '+' || display.innerText === '-' || display.innerText === '*'|| 
+            display.innerText === '/') {
+            display.innerText = "";
+        }
+
         // Do something with a typedNumber
         typedNumber = event.target.innerText;
         display.innerText = display.innerText + typedNumber;
@@ -37,6 +43,8 @@ calculator.addEventListener("click", (event) => {
             display.innerText = "Error";
         }
 
+        display.innerText = ''
+
         op = event.target.innerText;
         display.innerText = display.innerText + op;
 
@@ -47,11 +55,6 @@ calculator.addEventListener("click", (event) => {
         console.log(fullInput)
         display.innerText = ''
         fullInput = ''
-  }
-
-  // Example
-  if (event.target.innerText === "*") {
-    // Do something with this operator
   }
 });
 
