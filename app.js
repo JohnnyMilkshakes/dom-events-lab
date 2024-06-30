@@ -8,6 +8,7 @@ let num1 = "",
   op = "",
   typedNumber = "";
 
+let equalsPressed = false
 /*------------------------ Cached Element References ------------------------*/
 const calculator = document.querySelector("#calculator");
 const display = document.querySelector(".display");
@@ -28,6 +29,14 @@ calculator.addEventListener("click", (event) => {
 
         if (display.innerText === "Error") {
             display.innerText = "";
+        }
+
+        if (equalsPressed === true) {
+            display.innerText = "";
+            num1 = "";
+            num2 = "";
+            numsAndOps = []
+            equalsPressed = false
         }
 
         if (display.innerText === '+' || 
@@ -56,6 +65,8 @@ calculator.addEventListener("click", (event) => {
         display.innerText = display.innerText + op;
 
   } else if (event.target.classList.contains("equals")) {
+        equalsPressed = true
+
         numsAndOps.push(display.innerText)
 
         console.log(numsAndOps)
