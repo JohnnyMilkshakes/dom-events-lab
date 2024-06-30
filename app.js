@@ -4,51 +4,50 @@ const numsAndOps = []
 let num1 = "",
   num2 = "",
   op = "",
-  typedNumber = "";
+  userInput = "";
 
 let equalsPressed = false
+let operatorPressed = false
 /*------------------------ Cached Element References ------------------------*/
 const calculator = document.querySelector("#calculator");
 const display = document.querySelector(".display");
+
 
 /*----------------------------- Event Listeners -----------------------------*/
 calculator.addEventListener("click", (event) => {
 
     // if user clicks C, clear the display and data in memory
-    if (event.target.innerText === "C") {
+    if (getInnerText() === "C") {
         updateDisplay("")
         resetData()
 
         // Logic for when user clicks a number
-    } else if (event.target.classList.contains("number")) {
+    } else if (buttonType("number")) {
 
         if (display.innerText === "Error") {
             clearText()
         }
 
-        if (equalsPressed === true) {
+        if (equalsPressed) {
             clearText()
             resetData()
             equalsPressed = false
         }
 
-        if (display.innerText === '+' || 
-            display.innerText === '-' || 
-            display.innerText === '*' || 
-            display.innerText === '/') {
-                numsAndOps.push(display.innerText)
-                clearText()
-
+        if (operatorPressed) {
+            numsAndOps.push(display.innerText) // add the operator to the array
+            clearText()
+            operatorPressed = false
         }
 
-        typedNumber = event.target.innerText;
-        updateDisplay(display.innerText + typedNumber)
+        userInput = getInnerText()
+        updateDisplay(display.innerText + userInput)
 
 
         // Logic for when user clicks an operator 
-    } else if (event.target.classList.contains("operator")) {
+    } else if (buttonType("operator")) {
 
-        console.log(typeof display.innerText)
+        operatorPressed = true
 
         if (!display.innerText) {
             updateDisplay("Error")
@@ -58,14 +57,14 @@ calculator.addEventListener("click", (event) => {
 
             clearText();
     
-            op = event.target.innerText;
+            op = getInnerText()
             updateDisplay(display.innerText + op)
         }
 
         
 
         // Logic for when user clicks equals sign
-    } else if (event.target.classList.contains("equals")) {
+    } else if (buttonType("equals")) {
         equalsPressed = true
 
         numsAndOps.push(display.innerText)
@@ -82,21 +81,37 @@ calculator.addEventListener("click", (event) => {
 /*-------------------------------- Functions --------------------------------*/
 
 function basicCalculator(num1, num2, operation) {
-    if (operation === "+") {
-        return num1 + num2
-    } 
-    
-    if (operation === "-") {
-        return num1 - num2
-    } 
-    
-    if (operation === "*") {
-        return num1 * num2
-    } 
-    
-    if (operation === "/") {
-        return num1 / num2
+
+    switch(operation) {
+        case '+':
+            return add(num1, num2)
+
+        case '-':
+            return sub(num1, num2)
+
+        case '*':
+            return mul(num1, num2)
+
+        case '/':
+            return div(num1, num2)
+        
     }
+}
+
+function add(x, y) {
+    return x + y
+}
+
+function sub(x, y) {
+    return x - y
+}
+
+function mul(x, y) {
+    return x * y
+}
+
+function div(x, y) {
+    return x / y
 }
 
 function clearText() {
@@ -109,6 +124,14 @@ function resetData() {
     numsAndOps.length = 0
 }
 
-function updateDisplay(info) {
-    display.innerText = info
+function updateDisplay(input) {
+    display.innerText = input
+}
+
+function getInnerText() {
+    return event.target.innerText;
+}
+
+function buttonType(cssClass) {
+    return event.target.classList.contains(cssClass)
 }
