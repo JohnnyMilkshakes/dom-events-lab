@@ -7,7 +7,8 @@ let num1 = "",
   userInput = [],
   computedValue = "",
   previousPress = "",
-  chaining = false
+  chaining = false,
+  err = false
 /*------------------------ Cached Element References ------------------------*/
 const calculator = document.querySelector("#calculator");
 const display = document.querySelector(".display");
@@ -26,19 +27,19 @@ calculator.addEventListener("click", (event) => {
     } else if (buttonType("number")) {
 
         // Error may persist from previous button clicks, if so clear it
-        if (display.innerText === "Error") {
+        if (err) {
             clearText()
+            resetData()
+            err = false
         }
 
         // if the most recent button pressed is the equals, then reset the calculator state
         if (previousPress === 'equals') {
             clearText()
             resetData()
-            
         }
 
-        // if most recent button pressed is an operator,
-        // add the operator to the array and reset display
+        // if most recent button pressed is an operator reset the display
         if (previousPress === 'operator') {
             clearText()
             op = ''
@@ -62,19 +63,24 @@ calculator.addEventListener("click", (event) => {
 
 
         // if the user tries to type an operator without any numbers display an error
-        if (!display.innerText) {
+        if (!display.innerText || err) {
             updateDisplay("Error")
+            err = true
 
         } else if (previousPress === 'equals') {
             numsAndOps.push(computedValue)
             numsAndOps.push(op)
+            clearText()
+            updateDisplay(op)
             
-        } else if (numsAndOps.length === 2 || chaining) {
+        } else if (numsAndOps.length === 2) {
             console.log('Chaining logic now')
             chaining = true
 
-            numsAndOps.push(getNumber()) // add userIpnput to the array
+            numsAndOps.push(getNumber()) // add userInput to the array
             numsAndOps.push(op)
+
+            
 
 
             displayComputedValue()
@@ -82,7 +88,15 @@ calculator.addEventListener("click", (event) => {
             numsAndOps.length = 0
             numsAndOps.push(computedValue)
 
-            previousPress = 'operator'
+        } else if (chaining) {
+            console.log(numsAndOps)
+            numsAndOps.push(op)
+            numsAndOps.push(getNumber()) // add userInput to the array
+            displayComputedValue()
+            numsAndOps.length = 0
+            numsAndOps.push(computedValue)
+
+
 
         } else {
 
@@ -92,10 +106,9 @@ calculator.addEventListener("click", (event) => {
             numsAndOps.push(getNumber())
             numsAndOps.push(op)
 
-        }
+            updateDisplay(op)
 
-    clearText()
-    updateDisplay(op)
+        }
         
     previousPress = 'operator'
     userInput = []
@@ -106,14 +119,13 @@ calculator.addEventListener("click", (event) => {
     } else if (buttonType("equals")) {
 
         // if the user tries to click the equals sign without any numbers display an error
-        if (!display.innerText) {
+        if (!display.innerText || err) {
             updateDisplay("Error")
+            err = true
         } else {
 
-            console.log(previousPress)
-
-
-            // at this point the display should be showing a number, add it to the array
+            // at this point the user input for the second number should be recorded in 
+            // the userInput array, add it to the numsAndOps array
             numsAndOps.push(getNumber())
 
             displayComputedValue()
