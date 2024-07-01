@@ -5,12 +5,9 @@ let num1 = "",
   num2 = "",
   op = "",
   userInput = [],
-  previousPress = ""
-
-let numberPressed = false
-let equalsPressed = false
-let operatorPressed = false
-let chaining = false
+  computedValue = "",
+  previousPress = "",
+  chaining = false
 /*------------------------ Cached Element References ------------------------*/
 const calculator = document.querySelector("#calculator");
 const display = document.querySelector(".display");
@@ -43,48 +40,48 @@ calculator.addEventListener("click", (event) => {
         // if most recent button pressed is an operator,
         // add the operator to the array and reset display
         if (previousPress === 'operator') {
-            console.log(op)
-            numsAndOps.push(op)
             clearText()
             op = ''
         }
 
-        if (chaining) {
-            clearText()
-        }
+        // if (chaining) {
+        //     clearText()
+        // }
 
 
         userInput.push(getButtonInnerText())
-        updateDisplay(userInput.join(''))
+        updateDisplay(getNumber())
+
         previousPress = 'number'
 
-
-        
 
         // Logic for when user clicks an operator 
     } else if (buttonType("operator")) {
 
         op = getButtonInnerText()
 
+
         // if the user tries to type an operator without any numbers display an error
         if (!display.innerText) {
             updateDisplay("Error")
 
+        } else if (previousPress === 'equals') {
+            numsAndOps.push(computedValue)
+            numsAndOps.push(op)
+            
         } else if (numsAndOps.length === 2 || chaining) {
             console.log('Chaining logic now')
             chaining = true
-            numsAndOps.push(userInput.join('')) // add userIpnput to the array
-            num1 = +numsAndOps[0] // unary plus operators to convert string to number, 
-            num2 = +numsAndOps[2] // i asked chatgpt how to make that conversion 
-            op = numsAndOps[1] 
-            console.log(numsAndOps)
 
-            computedValue = basicCalculator(num1, num2, op)
-            console.log(computedValue)
-            updateDisplay(computedValue)
+            numsAndOps.push(getNumber()) // add userIpnput to the array
+            numsAndOps.push(op)
+
+
+            displayComputedValue()
+
             numsAndOps.length = 0
             numsAndOps.push(computedValue)
-            console.log(numsAndOps)
+
             previousPress = 'operator'
 
         } else {
@@ -92,16 +89,16 @@ calculator.addEventListener("click", (event) => {
             // at this point the array should contain a series of numbers consistent with what is 
             // showing on the screen, join the user input array into one number and push it as 
             // a value into the nums and ops array 
-            numsAndOps.push(userInput.join(''))
+            numsAndOps.push(getNumber())
+            numsAndOps.push(op)
 
-            clearText()
-    
-            updateDisplay(op)
-
-            previousPress = 'operator'
         }
 
-        userInput = []
+    clearText()
+    updateDisplay(op)
+        
+    previousPress = 'operator'
+    userInput = []
 
         
 
@@ -117,13 +114,11 @@ calculator.addEventListener("click", (event) => {
 
 
             // at this point the display should be showing a number, add it to the array
-            numsAndOps.push(display.innerText)
+            numsAndOps.push(getNumber())
 
-            num1 = +numsAndOps[0] // unary plus operators to convert string to number, 
-            num2 = +numsAndOps[2] // i asked chatgpt how to make that conversion 
-            op = numsAndOps[1] 
+            displayComputedValue()
 
-            updateDisplay(basicCalculator(num1, num2, op))
+            resetData()
 
             previousPress = 'equals'
         }
@@ -190,4 +185,18 @@ function getButtonInnerText() {
 
 function buttonType(cssClass) {
     return this.event.target.classList.contains(cssClass)
+}
+
+function getNumber() {
+    return userInput.join('')
+}
+
+function displayComputedValue() {
+    num1 = +numsAndOps[0] // unary plus operators to convert string to number, 
+    num2 = +numsAndOps[2] // i asked chatgpt how to make that conversion 
+    op = numsAndOps[1] 
+
+    computedValue = basicCalculator(num1, num2, op)
+
+    updateDisplay(computedValue)
 }
