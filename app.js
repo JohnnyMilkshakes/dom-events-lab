@@ -1,195 +1,174 @@
+class State {
+    constructor(newCalculation = true, displayingOutput = false, operatorPressed = false, err = false, history = []) {
+        this.newCalculation = newCalculation
+        this.displayingOutput = displayingOutput
+        this.operatorPressed = operatorPressed
+        this.err = err
+        this.history = history
+    }
+
+    getPreviousOutput() {
+        
+        const highestIndex = this.history.length -1
+
+        const lastCalc = this.history[highestIndex]
+
+        return lastCalc.result
+
+    }
+}
+
+class CalculationObject {
+    constructor(x = 0, op = '', y = 0, result = null) {
+        this.x = x
+        this.y = y
+        this.op = op
+        this.result = result
+    }
+
+    calculate() {
+
+        switch(this.op) {
+            case '+':
+                this.result = this.add()
+                return this.result
+    
+            case '-':
+                this.result = this.sub()
+                return this.result
+    
+            case '*':
+                this.result = this.mul()
+                return this.result
+    
+            case '/':
+                this.result = this.div()
+                return this.result
+            
+        }
+    }
+
+    add() {
+        return +this.x + +this.y
+    }
+    
+    sub() {
+        return +this.x - +this.y
+    }
+    
+    mul() {
+        return +this.x * +this.y
+    }
+    
+    div() {
+        return +this.x / +this.y
+    }
+
+    setOperator(operator) {
+        this.op = operator
+
+        event.target.style.backgroundColor = 'white'
+        event.target.style.color = 'orange'
+    }
+
+    reset() {
+        this.x = 0
+        this.y = 0
+        this.op = ''
+        this.result = null
+    }
+}
+
 /*-------------------------------- Constants --------------------------------*/
-const numsAndOps = []
+
 /*-------------------------------- Variables --------------------------------*/
-let num1 = "",
-  num2 = "",
-  op = "",
-  userInput = [],
-  computedValue = "",
-  previousPress = "",
-  chaining = false,
-  err = false
+
+let userInput = []
+let state = new State()
+let currentCalculation = new CalculationObject()
+
 /*------------------------ Cached Element References ------------------------*/
+
 const calculator = document.querySelector("#calculator");
 const display = document.querySelector(".display");
-
+const operators = document.querySelectorAll(".operator")
 
 /*----------------------------- Event Listeners -----------------------------*/
+
 calculator.addEventListener("click", (event) => {
 
-    // if user clicks C, clear the display and data in memory
-    if (getButtonInnerText() === "C") {
-        clearText()
-        resetData()
-        previousPress = 'C'
-
-        // Logic for when user clicks a number
-    } else if (buttonType("number")) {
-
-        // Error may persist from previous button clicks, if so clear it
-        if (err) {
-            clearText()
-            resetData()
-            err = false
+    if (!state.operatorPressed) {
+    
+        if (buttonType("number")) {
+            userInput.push(getButtonInnerText())
+            updateDisplay(getNumber())
+            state.displayingOutput = false
         }
 
-        // if the most recent button pressed is the equals, then reset the calculator state
-        if (previousPress === 'equals') {
-            clearText()
-            resetData()
-        }
+        if (buttonType("operator")) {
 
-        // if most recent button pressed is an operator reset the display
-        if (previousPress === 'operator') {
-            clearText()
-            op = ''
-        }
+            if (state.displayingOutput) {
+                currentCalculation.x = state.getPreviousOutput()
+            } else {
+                currentCalculation.x  = getNumber()
+            }
 
-        // if (chaining) {
-        //     clearText()
-        // }
-
-
-        userInput.push(getButtonInnerText())
-        updateDisplay(getNumber())
-
-        previousPress = 'number'
-
-
-        // Logic for when user clicks an operator 
-    } else if (buttonType("operator")) {
-
-        op = getButtonInnerText()
-
-
-        // if the user tries to type an operator without any numbers display an error
-        if (!display.innerText || err) {
-            updateDisplay("Error")
-            err = true
-
-        } else if (previousPress === 'equals') {
-            numsAndOps.push(computedValue)
-            numsAndOps.push(op)
-            clearText()
-            updateDisplay(op)
+            currentCalculation.setOperator(getButtonInnerText())
             
-        } else if (numsAndOps.length === 2) {
-            console.log('Chaining logic now')
-            chaining = true
-
-            numsAndOps.push(getNumber()) // add userInput to the array
-            numsAndOps.push(op)
-
-            
-
-
-            displayComputedValue()
-
-            numsAndOps.length = 0
-            numsAndOps.push(computedValue)
-
-        } else if (chaining) {
-            console.log(numsAndOps)
-            numsAndOps.push(op)
-            numsAndOps.push(getNumber()) // add userInput to the array
-            displayComputedValue()
-            numsAndOps.length = 0
-            numsAndOps.push(computedValue)
-
-
-
-        } else {
-
-            // at this point the array should contain a series of numbers consistent with what is 
-            // showing on the screen, join the user input array into one number and push it as 
-            // a value into the nums and ops array 
-            numsAndOps.push(getNumber())
-            numsAndOps.push(op)
-
-            updateDisplay(op)
-
+            state.operatorPressed = true
+            userInput = []
         }
-        
-    previousPress = 'operator'
-    userInput = []
 
-        
+        if (getButtonInnerText() === "C") {
+            userInput = []
+            updateDisplay('0')
+            state.displayingOutput = false
+        }
 
-        // Logic for when user clicks equals sign
-    } else if (buttonType("equals")) {
+        // x input set and operator currently selected
+    } else {
 
-        // if the user tries to click the equals sign without any numbers display an error
-        if (!display.innerText || err) {
-            updateDisplay("Error")
-            err = true
-        } else {
+        resetOperatorColor()
 
-            // at this point the user input for the second number should be recorded in 
-            // the userInput array, add it to the numsAndOps array
-            numsAndOps.push(getNumber())
+        if (buttonType("operator")) {
+            currentCalculation.setOperator(getButtonInnerText())
+        }
 
-            displayComputedValue()
+        if (getButtonInnerText() === "C") {
+            currentCalculation.op = ''
+            operatorPressed = false
+        }
 
-            resetData()
+        if (buttonType("number")) {
+            userInput.push(getButtonInnerText())
+            updateDisplay(getNumber())
+        }
 
-            previousPress = 'equals'
+        if (buttonType("equals")) {
+
+            if (userInput.length === 0) {
+                currentCalculation.y = currentCalculation.x
+
+            } else {
+                currentCalculation.y = getNumber()
+            }
+
+            let output = currentCalculation.calculate()
+            updateDisplay(output)
+
+            addToHistory(currentCalculation)
+            
+            state.displayingOutput = true
+            state.operatorPressed = false
+            currentCalculation.reset()
+            userInput = []
+            console.log(state.history)
         }
     }
 });
 
 /*-------------------------------- Functions --------------------------------*/
 
-function basicCalculator(num1, num2, operation) {
-
-    switch(operation) {
-        case '+':
-            return add(num1, num2)
-
-        case '-':
-            return sub(num1, num2)
-
-        case '*':
-            return mul(num1, num2)
-
-        case '/':
-            return div(num1, num2)
-        
-    }
-}
-
-function add(x, y) {
-    return x + y
-}
-
-function sub(x, y) {
-    return x - y
-}
-
-function mul(x, y) {
-    return x * y
-}
-
-function div(x, y) {
-    return x / y
-}
-
-function clearText() {
-    display.innerText = ''
-}
-
-function resetData() {
-    num1 = "";
-    num2 = "";
-    numsAndOps.length = 0
-    equalsPressed = false
-    operatorPressed = false
-    chaining = false
-    userInput = []
-}
-
-function updateDisplay(input) {
-    display.innerText = input
-}
 
 function getButtonInnerText() {
     return this.event.target.innerText
@@ -203,12 +182,19 @@ function getNumber() {
     return userInput.join('')
 }
 
-function displayComputedValue() {
-    num1 = +numsAndOps[0] // unary plus operators to convert string to number, 
-    num2 = +numsAndOps[2] // i asked chatgpt how to make that conversion 
-    op = numsAndOps[1] 
+function updateDisplay(input) {
+    display.innerText = input
+}
 
-    computedValue = basicCalculator(num1, num2, op)
+function addToHistory(calcObj) {
+    let previousCalculation = new CalculationObject(calcObj.x, calcObj.op, calcObj.y, calcObj.result)
+    state.history.push(previousCalculation)
+}
 
-    updateDisplay(computedValue)
+function resetOperatorColor() {
+
+    operators.forEach((button) => {
+        button.style.backgroundColor = 'rgb(252, 139, 0)'
+        button.style.color = 'rgb(255, 255, 255)'
+    })
 }
