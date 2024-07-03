@@ -67,5 +67,9 @@
     width: 117px;
     border-radius: 60px;
   }
-
+  
+  .negate, .percent, .clear {
+    background-color: rgba(211, 211, 211, 0.72);
+    color: black
+  }
   
