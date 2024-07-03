@@ -9,12 +9,10 @@ class State {
 
     getPreviousOutput() {
         
-        const highestIndex = this.history.length -1
-
+        const highestIndex = this.history.length - 1
         const lastCalc = this.history[highestIndex]
 
         return lastCalc.result
-
     }
 }
 
@@ -44,7 +42,6 @@ class CalculationObject {
             case '/':
                 this.result = this.div()
                 return this.result
-            
         }
     }
 
@@ -97,25 +94,44 @@ const operators = document.querySelectorAll(".operator")
 
 calculator.addEventListener("click", (event) => {
 
+    // This will always start as false and we assume the user will type a number first 
+    // so that logic is handled first
     if (!state.operatorPressed) {
     
         if (buttonType("number")) {
+
+            // push each number press to the userInput array
             userInput.push(getButtonInnerText())
+
+            // do a .join('') on the array to get the entire number and display it 
             updateDisplay(getNumber())
+
+            // its possible that output from a previous calculation was displaying when 
+            // the number was typed but since we overwrite that with the new input
+            // restore the displayingOutput state to false
             state.displayingOutput = false
         }
 
         if (buttonType("operator")) {
 
+            // in the case that the calculator is displaying a previous result 
+            // set the previous result to the x value of the current calculation
             if (state.displayingOutput) {
                 currentCalculation.x = state.getPreviousOutput()
+
+            // Otherwise set the x value to be the user input
+            // if the user has no input before clicking an operator x gets set to 0
             } else {
-                currentCalculation.x  = getNumber()
+                currentCalculation.x = getNumber()
             }
 
+            // get the operator and change color of button associated with it
             currentCalculation.setOperator(getButtonInnerText())
-            
-            state.operatorPressed = true
+
+            // this ensures the else branch of logic executes on next button press
+            state.operatorPressed = true 
+
+            // reset user input for next number
             userInput = []
         }
 
@@ -132,12 +148,7 @@ calculator.addEventListener("click", (event) => {
 
         if (buttonType("operator")) {
             currentCalculation.setOperator(getButtonInnerText())
-        }
-
-        if (getButtonInnerText() === "C") {
-            currentCalculation.op = ''
-            operatorPressed = false
-        }
+        } 
 
         if (buttonType("number")) {
             userInput.push(getButtonInnerText())
@@ -164,11 +175,15 @@ calculator.addEventListener("click", (event) => {
             userInput = []
             console.log(state.history)
         }
+
+        if (getButtonInnerText() === "C") {
+            currentCalculation.op = ''
+            state.operatorPressed = false
+        }
     }
 });
 
 /*-------------------------------- Functions --------------------------------*/
-
 
 function getButtonInnerText() {
     return this.event.target.innerText
@@ -179,7 +194,12 @@ function buttonType(cssClass) {
 }
 
 function getNumber() {
-    return userInput.join('')
+    if (userInput.length === 0) {
+        return 0
+    } else {
+        return userInput.join('')
+    }
+    
 }
 
 function updateDisplay(input) {
@@ -192,7 +212,6 @@ function addToHistory(calcObj) {
 }
 
 function resetOperatorColor() {
-
     operators.forEach((button) => {
         button.style.backgroundColor = 'rgb(252, 139, 0)'
         button.style.color = 'rgb(255, 255, 255)'
