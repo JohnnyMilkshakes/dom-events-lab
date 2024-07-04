@@ -1,31 +1,32 @@
-// State function to manage the state of the calculator
-// This function returns an object that keeps track of the calculator's state
-const State = (displayingOutput = false, err = false, history = []) => ({
-    displayingOutput, // boolean to check if the output is currently being displayed
-    err, // boolean to track if there is an error
-    history, // array to store calculation history
+// Class to manage the state of the calculator
+class State {
+    constructor(err = false, previousPress = '', history = []) {
+        this.err = err; // boolean to track if there is an error
+        this.history = history; // array to store calculation history
+        this.previousPress = previousPress;
+    }
 
     // Method to get the result of the previous calculation
     getPreviousOutput() {
         // If there is no history, return 0, otherwise return the result of the last calculation
         return this.history.length === 0 ? 0 : this.history[this.history.length - 1].result;
-    },
+    }
 
     // Method to add a new calculation to the history
     addToHistory(calcObj) {
         // Create a new calculation object and add it to the history array
-        const previousCalculation = CalculationObject(calcObj.x, calcObj.op, calcObj.y, calcObj.result);
-        this.history.push(previousCalculation);
+        this.history.push(new Calculation(calcObj.x, calcObj.op, calcObj.y, calcObj.result));
     }
-});
+}
 
-// CalculationObject function to create a calculation object
-// This function returns an object representing a single calculation
-const CalculationObject = (x = 0, op = '', y = 0, result = null) => ({
-    x, // first operand
-    y, // second operand
-    op, // operator
-    result, // result of the calculation
+// Class to create a calculation object
+class Calculation {
+    constructor(x = 0, op = '', y = 0, result = null) {
+        this.x = x; // first operand
+        this.y = y; // second operand
+        this.op = op; // operator
+        this.result = result; // result of the calculation
+    }
 
     // Method to perform the calculation based on the operator
     calculate() {
@@ -36,35 +37,50 @@ const CalculationObject = (x = 0, op = '', y = 0, result = null) => ({
             case '/': return this.div();
             default: throw new Error("Unknown operator");
         }
-    },
+    }
 
     // Method to perform addition
     add() {
-        return this.x + this.y;
-    },
+        this.result = this.x + this.y;
+        return this.result
+    }
 
     // Method to perform subtraction
     sub() {
-        return this.x - this.y;
-    },
+        this.result = this.x - this.y;
+        return this.result
+    }
 
     // Method to perform multiplication
     mul() {
-        return this.x * this.y;
-    },
+        this.result = this.x * this.y;
+        return this.result
+    }
 
     // Method to perform division
     div() {
         if (this.y === 0) {
             throw new Error("Division by zero");
         }
-        return this.x / this.y;
-    },
+        this.result = this.x / this.y;
+        return this.result
+    }
+
+    setX(number, state) {
+        this.x = state.previousPress === "equals" ? state.getPreviousOutput() : number;
+        return this.x
+    }
+
+    setY(number) {
+        this.y = number ? number : this.x;
+        return this.y
+    }
 
     // Method to set the operator
     setOperator(operator) {
         this.op = operator;
-    },
+        return this.op
+    }
 
     // Method to reset the calculation object
     reset() {
@@ -73,16 +89,20 @@ const CalculationObject = (x = 0, op = '', y = 0, result = null) => ({
         this.op = '';
         this.result = null;
     }
-});
+}
 
 // CalculatorController function to manage the calculator's operations and UI
 // This function is a closure that encapsulates the calculator state and logic
 const CalculatorController = () => {
-    let state = State(); // Initialize state
-    let currentCalculation = CalculationObject(); // Initialize current calculation object
+    let state = new State(); // Initialize state
+    let currentCalculation = new Calculation(); // Initialize current calculation object
     let userInput = [0]; // Array to store user input
     const display = document.querySelector(".display"); // Display element
     const operators = document.querySelectorAll(".operator"); // Operator buttons
+    const plusStyle = document.querySelector(".plus").style;
+    const minusStyle = document.querySelector(".minus").style;
+    const multiplyStyle = document.querySelector(".multiply").style;
+    const divideStyle = document.querySelector(".divide").style;
 
     // Function to initialize event listeners
     const initEventListeners = () => {
@@ -116,13 +136,14 @@ const CalculatorController = () => {
                 handlePercent();
                 break;
         }
+        state.previousPress = inputType;
     };
 
     // Function to handle button clicks
     const handleButtonClick = (event) => {
         const buttonType = getButtonType(event.target);
         const buttonText = event.target.innerText;
-        const buttonStyle = event.target.style;
+        const buttonStyle = getButtonStyle(event.target);
         handleInput(buttonType, buttonText, buttonStyle);
     };
 
@@ -139,7 +160,9 @@ const CalculatorController = () => {
         if (!buttonType) return;
 
         const buttonText = event.key === 'Enter' ? '=' : event.key;
-        handleInput(buttonType, buttonText);
+
+        const buttonStyle = getButtonStyle(event.key);
+        handleInput(buttonType, buttonText, buttonStyle);
     };
 
     // Function to get the type of the button clicked
@@ -150,6 +173,15 @@ const CalculatorController = () => {
         if (button.classList.contains("clear")) return "clear";
         if (button.classList.contains("negate")) return "negate";
         if (button.classList.contains("percent")) return "percent";
+        return "";
+    };
+
+    // Function to get the style of the operator clicked
+    const getButtonStyle = (button) => {
+        if ((button?.classList?.contains("plus") ?? false) || button === '+') return plusStyle;
+        if ((button?.classList?.contains("minus") ?? false) || button === '-') return minusStyle;
+        if ((button?.classList?.contains("multiply") ?? false) || button === '*') return multiplyStyle;
+        if ((button?.classList?.contains("divide") ?? false) || button === '/') return divideStyle;
         return "";
     };
 
@@ -164,13 +196,13 @@ const CalculatorController = () => {
         }
         userInput.push(buttonText); // Add the new number to the input
         updateDisplay(userInput.join('')); // Update the display
-        state.displayingOutput = false; // Set displayingOutput to false
     };
 
     // Function to handle operator input
     // Uses closure to modify and access currentCalculation and userInput array
     const handleOperatorInput = (buttonText, buttonStyle) => {
-        currentCalculation.x = state.displayingOutput ? state.getPreviousOutput() : getNumber();
+        console.log(state.getPreviousOutput());
+        currentCalculation.setX(getNumber(), state)
         currentCalculation.setOperator(buttonText); // Set the operator
         userInput = []; // Reset user input
         if (buttonStyle) {
@@ -183,12 +215,11 @@ const CalculatorController = () => {
     // Uses closure to modify and access currentCalculation, state, and userInput
     const handleEqualsInput = () => {
         try {
-            currentCalculation.y = userInput.length === 0 ? currentCalculation.x : getNumber();
+            currentCalculation.setY(getNumber())
             const result = currentCalculation.calculate(); // Perform the calculation
             updateDisplay(result); // Update the display
             state.addToHistory(currentCalculation); // Add the calculation to history
-            state.displayingOutput = true; // Set displayingOutput to true
-            currentCalculation.reset(); // Reset the current calculation
+            currentCalculation = new Calculation(); // Reset the current calculation
             userInput = [0]; // Reset user input
         } catch (error) {
             updateDisplay(error.message); // Display error message
@@ -201,9 +232,8 @@ const CalculatorController = () => {
     const handleClear = () => {
         userInput = [0]; // Reset user input
         updateDisplay('0'); // Update the display
-        state.displayingOutput = false; // Set displayingOutput to false
         state.err = false; // Set error state to false
-        currentCalculation.reset(); // Reset the current calculation
+        currentCalculation = new Calculation(); // Reset the current calculation
     };
 
     // Function to handle negate input
@@ -215,15 +245,19 @@ const CalculatorController = () => {
             userInput.unshift('-'); // Add the negative sign
         }
         updateDisplay(userInput.join('')); // Update the display
-        state.displayingOutput = false; // Set displayingOutput to false
+        state.err = false; // Set error state to false
     };
 
     // Function to handle percent input
     // Uses closure to modify and access userInput array and state object
     const handlePercent = () => {
-        userInput = [getNumber() / 100]; // Convert the number to percentage
-        updateDisplay(userInput.join('')); // Update the display
-        state.displayingOutput = false; // Set displayingOutput to false
+        if (state.err) {
+            updateDisplay("Error");
+        } else {
+            userInput = [getNumber() / 100]; // Convert the number to percentage
+            updateDisplay(userInput.join('')); // Update the display
+            state.err = false;
+        }
     };
 
     // Function to get the number from user input
@@ -269,6 +303,360 @@ const CalculatorController = () => {
 const calculatorController = CalculatorController();
 
 console.log(calculatorController);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// // State function to manage the state of the calculator
+// // This function returns an object that keeps track of the calculator's state
+// const State = (err = false, previousPress = '', history = []) => ({
+//     err, // boolean to track if there is an error
+//     history, // array to store calculation history
+//     previousPress,
+
+//     // Method to get the result of the previous calculation
+//     getPreviousOutput() {
+//         // If there is no history, return 0, otherwise return the result of the last calculation
+//         return this.history.length === 0 ? 0 : this.history[this.history.length - 1].result;
+//     },
+
+//     // Method to add a new calculation to the history
+//     addToHistory(calcObj) {
+//         // Create a new calculation object and add it to the history array
+//         const previousCalculation = CalculationObject(calcObj.x, calcObj.op, calcObj.y, calcObj.result);
+//         this.history.push(previousCalculation);
+//     }
+// });
+
+// // CalculationObject function to create a calculation object
+// // This function returns an object representing a single calculation
+// const CalculationObject = (x = 0, op = '', y = 0, result = null) => ({
+//     x, // first operand
+//     y, // second operand
+//     op, // operator
+//     result, // result of the calculation
+
+//     // Method to perform the calculation based on the operator
+//     calculate() {
+//         switch (this.op) {
+//             case '+': return this.add();
+//             case '-': return this.sub();
+//             case '*': return this.mul();
+//             case '/': return this.div();
+//             default: throw new Error("Unknown operator");
+//         }
+//     },
+
+//     // Method to perform addition
+//     add() {
+//         this.result = this.x + this.y;
+//         return this.result
+//     },
+
+//     // Method to perform subtraction
+//     sub() {
+//         this.result = this.x - this.y;
+//         return this.result
+//     },
+
+//     // Method to perform multiplication
+//     mul() {
+//         this.result = this.x * this.y;
+//         return this.result
+//     },
+
+//     // Method to perform division
+//     div() {
+//         if (this.y === 0) {
+//             throw new Error("Division by zero");
+//         }
+//         this.result = this.x / this.y;
+//         return this.result
+//     },
+
+//     // Method to set the operator
+//     setOperator(operator) {
+//         this.op = operator;
+//     },
+
+//     // Method to reset the calculation object
+//     reset() {
+//         this.x = 0;
+//         this.y = 0;
+//         this.op = '';
+//         this.result = null;
+//     }
+// });
+
+// // CalculatorController function to manage the calculator's operations and UI
+// // This function is a closure that encapsulates the calculator state and logic
+// const CalculatorController = () => {
+//     let state = State(); // Initialize state
+//     let currentCalculation = CalculationObject(); // Initialize current calculation object
+//     let userInput = [0]; // Array to store user input
+//     const display = document.querySelector(".display"); // Display element
+//     const operators = document.querySelectorAll(".operator"); // Operator buttons
+//     const plusStyle = document.querySelector(".plus").style
+//     const minusStyle = document.querySelector(".minus").style
+//     const multiplyStyle = document.querySelector(".multiply").style
+//     const divideStyle = document.querySelector(".divide").style
+
+//     // Function to initialize event listeners
+//     const initEventListeners = () => {
+//         const calculator = document.querySelector("#calculator");
+//         calculator.addEventListener("click", handleButtonClick);
+//         document.addEventListener("keydown", handleKeyPress);
+//     };
+
+//     // Function to handle button clicks and key presses
+//     // This function demonstrates closure as it captures and uses state and currentCalculation
+//     const handleInput = (inputType, inputText, inputStyle = null) => {
+//         resetOperatorColor();
+
+//         switch (inputType) {
+//             case "number":
+//                 handleNumberInput(inputText);
+//                 break;
+//             case "operator":
+//                 handleOperatorInput(inputText, inputStyle);
+//                 break;
+//             case "equals":
+//                 handleEqualsInput();
+//                 break;
+//             case "clear":
+//                 handleClear();
+//                 break;
+//             case "negate":
+//                 handleNegate();
+//                 break;
+//             case "percent":
+//                 handlePercent();
+//                 break;
+//         }
+//         state.previousPress = inputType
+//     };
+
+//     // Function to handle button clicks
+//     const handleButtonClick = (event) => {
+//         const buttonType = getButtonType(event.target);
+//         const buttonText = event.target.innerText;
+//         const buttonStyle = getButtonStyle(event.target)
+//         handleInput(buttonType, buttonText, buttonStyle);
+//     };
+
+//     // Function to handle key presses
+//     const handleKeyPress = (event) => {
+//         const keyMap = {
+//             '0': 'number', '1': 'number', '2': 'number', '3': 'number', '4': 'number',
+//             '5': 'number', '6': 'number', '7': 'number', '8': 'number', '9': 'number',
+//             '+': 'operator', '-': 'operator', '*': 'operator', '/': 'operator',
+//             'Enter': 'equals', '=': 'equals', 'Escape': 'clear', 'c': 'clear'
+//         };
+
+//         const buttonType = keyMap[event.key];
+//         if (!buttonType) return;
+
+//         const buttonText = event.key === 'Enter' ? '=' : event.key;
+
+//         const buttonStyle = getButtonStyle(event.key)
+//         handleInput(buttonType, buttonText, buttonStyle);
+//     };
+
+//     // Function to get the type of the button clicked
+//     const getButtonType = (button) => {
+//         if (button.classList.contains("number")) return "number";
+//         if (button.classList.contains("operator")) return "operator";
+//         if (button.classList.contains("equals")) return "equals";
+//         if (button.classList.contains("clear")) return "clear";
+//         if (button.classList.contains("negate")) return "negate";
+//         if (button.classList.contains("percent")) return "percent";
+//         return "";
+//     };
+
+//     // Function to get the style of the operator clicked
+//     const getButtonStyle = (button) => {
+//         if ((button?.classList?.contains("plus") ?? false) || button === '+') return plusStyle;
+//         if ((button?.classList?.contains("minus") ?? false) || button === '-') return minusStyle;
+//         if ((button?.classList?.contains("multiply") ?? false) || button === '*') return multiplyStyle;
+//         if ((button?.classList?.contains("divide") ?? false) || button === '/') return divideStyle;
+//         return "";
+//     };
+
+//     // Function to handle number input
+//     // Uses closure to modify and access userInput array and state object
+//     const handleNumberInput = (buttonText) => {
+//         // If the user input starts with zero or there is an error, reset the input
+//         if (userInput[0] === 0 || state.err) {
+//             userInput.length = 0;
+//         } else if (userInput[0] === '-' && userInput[1] === 0) {
+//             userInput.pop();
+//         }
+//         userInput.push(buttonText); // Add the new number to the input
+//         updateDisplay(userInput.join('')); // Update the display
+//     };
+
+//     // Function to handle operator input
+//     // Uses closure to modify and access currentCalculation and userInput array
+//     const handleOperatorInput = (buttonText, buttonStyle) => {
+//         console.log(state.getPreviousOutput())
+//         currentCalculation.x = state.previousPress === "equals" ? state.getPreviousOutput() : getNumber();
+//         currentCalculation.setOperator(buttonText); // Set the operator
+//         userInput = []; // Reset user input
+//         if (buttonStyle) {
+//             buttonStyle.backgroundColor = 'white'; // Highlight the operator button
+//             buttonStyle.color = 'orange';
+//         }
+//     };
+
+//     // Function to handle equals input
+//     // Uses closure to modify and access currentCalculation, state, and userInput
+//     const handleEqualsInput = () => {
+//         try {
+//             currentCalculation.y = userInput.length === 0 ? currentCalculation.x : getNumber();
+//             const result = currentCalculation.calculate(); // Perform the calculation
+//             updateDisplay(result); // Update the display
+//             state.addToHistory(currentCalculation); // Add the calculation to history
+//             currentCalculation.reset(); // Reset the current calculation
+//             userInput = [0]; // Reset user input
+//         } catch (error) {
+//             updateDisplay(error.message); // Display error message
+//             state.err = true; // Set error state to true
+//         }
+//     };
+
+//     // Function to handle clear input
+//     // Uses closure to reset userInput, state, and currentCalculation
+//     const handleClear = () => {
+//         userInput = [0]; // Reset user input
+//         updateDisplay('0'); // Update the display
+//         state.err = false; // Set error state to false
+//         currentCalculation.reset(); // Reset the current calculation
+//     };
+
+//     // Function to handle negate input
+//     // Uses closure to modify and access userInput array and state object
+//     const handleNegate = () => {
+//         if (userInput[0] === '-') {
+//             userInput.shift(); // Remove the negative sign
+//         } else if (getNumber() >= 0) {
+//             userInput.unshift('-'); // Add the negative sign
+//         }
+//         updateDisplay(userInput.join('')); // Update the display
+//         state.err = false; // Set error state to false
+//     };
+
+//     // Function to handle percent input
+//     // Uses closure to modify and access userInput array and state object
+//     const handlePercent = () => {
+//         if (state.err) {
+//             updateDisplay("Error")
+//         } else {
+//             userInput = [getNumber() / 100]; // Convert the number to percentage
+//             updateDisplay(userInput.join('')); // Update the display
+//             state.err = false
+//         }
+//     };
+
+//     // Function to get the number from user input
+//     // Uses closure to access userInput array
+//     const getNumber = () => {
+//         return userInput.length === 0 ? 0 : parseFloat(userInput.join(''));
+//     };
+
+//     // Function to update the display
+//     const updateDisplay = (input) => {
+//         display.innerText = input;
+//     };
+
+//     // Function to reset operator button colors
+//     const resetOperatorColor = () => {
+//         operators.forEach((button) => {
+//             button.style.backgroundColor = 'rgb(252, 139, 0)'; // Default color
+//             button.style.color = 'rgb(255, 255, 255)'; // Default text color
+//         });
+//     };
+
+//     // Initialize the event listeners
+//     initEventListeners();
+
+//     // Return the functions to manage calculator operations and UI
+//     return {
+//         handleButtonClick,
+//         handleKeyPress,
+//         handleNumberInput,
+//         handleOperatorInput,
+//         handleEqualsInput,
+//         handleClear,
+//         getNumber,
+//         updateDisplay,
+//         resetOperatorColor,
+//         initEventListeners
+//     };
+// };
+
+// /*-------------------------------- Initialize Calculator --------------------------------*/
+
+// // Initialize the calculator controller
+// const calculatorController = CalculatorController();
+
+// console.log(calculatorController);
 
 
 
