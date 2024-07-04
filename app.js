@@ -1,4 +1,5 @@
 // State function to manage the state of the calculator
+// This function returns an object that keeps track of the calculator's state
 const State = (displayingOutput = false, err = false, history = []) => ({
     displayingOutput, // boolean to check if the output is currently being displayed
     err, // boolean to track if there is an error
@@ -6,17 +7,20 @@ const State = (displayingOutput = false, err = false, history = []) => ({
 
     // Method to get the result of the previous calculation
     getPreviousOutput() {
+        // If there is no history, return 0, otherwise return the result of the last calculation
         return this.history.length === 0 ? 0 : this.history[this.history.length - 1].result;
     },
 
     // Method to add a new calculation to the history
     addToHistory(calcObj) {
+        // Create a new calculation object and add it to the history array
         const previousCalculation = CalculationObject(calcObj.x, calcObj.op, calcObj.y, calcObj.result);
         this.history.push(previousCalculation);
     }
 });
 
 // CalculationObject function to create a calculation object
+// This function returns an object representing a single calculation
 const CalculationObject = (x = 0, op = '', y = 0, result = null) => ({
     x, // first operand
     y, // second operand
@@ -51,7 +55,6 @@ const CalculationObject = (x = 0, op = '', y = 0, result = null) => ({
 
     // Method to perform division
     div() {
-
         if (this.y === 0) {
             throw new Error("Division by zero");
         }
@@ -73,6 +76,7 @@ const CalculationObject = (x = 0, op = '', y = 0, result = null) => ({
 });
 
 // CalculatorController function to manage the calculator's operations and UI
+// This function is a closure that encapsulates the calculator state and logic
 const CalculatorController = () => {
     let state = State(); // Initialize state
     let currentCalculation = CalculationObject(); // Initialize current calculation object
@@ -88,6 +92,7 @@ const CalculatorController = () => {
     };
 
     // Function to handle button clicks and key presses
+    // This function demonstrates closure as it captures and uses state and currentCalculation
     const handleInput = (inputType, inputText, inputStyle = null) => {
         resetOperatorColor();
 
@@ -149,77 +154,80 @@ const CalculatorController = () => {
     };
 
     // Function to handle number input
+    // Uses closure to modify and access userInput array and state object
     const handleNumberInput = (buttonText) => {
-        
-        // this just removes the inital zero 
+        // If the user input starts with zero or there is an error, reset the input
         if (userInput[0] === 0 || state.err) {
-            userInput.length = 0
+            userInput.length = 0;
         } else if (userInput[0] === '-' && userInput[1] === 0) {
-            userInput.pop()
+            userInput.pop();
         }
-        userInput.push(buttonText);
-        updateDisplay(userInput.join(''));
-        state.displayingOutput = false;
-        console.log(userInput)
+        userInput.push(buttonText); // Add the new number to the input
+        updateDisplay(userInput.join('')); // Update the display
+        state.displayingOutput = false; // Set displayingOutput to false
     };
 
     // Function to handle operator input
+    // Uses closure to modify and access currentCalculation and userInput array
     const handleOperatorInput = (buttonText, buttonStyle) => {
         currentCalculation.x = state.displayingOutput ? state.getPreviousOutput() : getNumber();
-        currentCalculation.setOperator(buttonText);
-        userInput = [];
+        currentCalculation.setOperator(buttonText); // Set the operator
+        userInput = []; // Reset user input
         if (buttonStyle) {
-            buttonStyle.backgroundColor = 'white';
+            buttonStyle.backgroundColor = 'white'; // Highlight the operator button
             buttonStyle.color = 'orange';
         }
     };
 
     // Function to handle equals input
+    // Uses closure to modify and access currentCalculation, state, and userInput
     const handleEqualsInput = () => {
         try {
             currentCalculation.y = userInput.length === 0 ? currentCalculation.x : getNumber();
-            const result = currentCalculation.calculate();
-            updateDisplay(result);
-            state.addToHistory(currentCalculation);
-            state.displayingOutput = true;
-            currentCalculation.reset();
-            userInput = [0];
+            const result = currentCalculation.calculate(); // Perform the calculation
+            updateDisplay(result); // Update the display
+            state.addToHistory(currentCalculation); // Add the calculation to history
+            state.displayingOutput = true; // Set displayingOutput to true
+            currentCalculation.reset(); // Reset the current calculation
+            userInput = [0]; // Reset user input
         } catch (error) {
-            updateDisplay(error.message);
-            state.err = true;
+            updateDisplay(error.message); // Display error message
+            state.err = true; // Set error state to true
         }
     };
 
     // Function to handle clear input
+    // Uses closure to reset userInput, state, and currentCalculation
     const handleClear = () => {
-        userInput = [0];
-        updateDisplay('0');
-        state.displayingOutput = false;
-        state.err = false
-        currentCalculation.reset();
+        userInput = [0]; // Reset user input
+        updateDisplay('0'); // Update the display
+        state.displayingOutput = false; // Set displayingOutput to false
+        state.err = false; // Set error state to false
+        currentCalculation.reset(); // Reset the current calculation
     };
 
     // Function to handle negate input
+    // Uses closure to modify and access userInput array and state object
     const handleNegate = () => {
         if (userInput[0] === '-') {
-            userInput.shift()
+            userInput.shift(); // Remove the negative sign
         } else if (getNumber() >= 0) {
-            userInput.unshift('-')
+            userInput.unshift('-'); // Add the negative sign
         }
-        console.log(userInput)
-        updateDisplay(userInput.join(''));
-        state.displayingOutput = false;
+        updateDisplay(userInput.join('')); // Update the display
+        state.displayingOutput = false; // Set displayingOutput to false
     };
 
     // Function to handle percent input
+    // Uses closure to modify and access userInput array and state object
     const handlePercent = () => {
-
-        userInput = [getNumber() / 100]
-        updateDisplay(userInput.join(''));
-        state.displayingOutput = false;
+        userInput = [getNumber() / 100]; // Convert the number to percentage
+        updateDisplay(userInput.join('')); // Update the display
+        state.displayingOutput = false; // Set displayingOutput to false
     };
 
     // Function to get the number from user input
+    // Uses closure to access userInput array
     const getNumber = () => {
         return userInput.length === 0 ? 0 : parseFloat(userInput.join(''));
     };
@@ -232,8 +240,8 @@ const CalculatorController = () => {
     // Function to reset operator button colors
     const resetOperatorColor = () => {
         operators.forEach((button) => {
-            button.style.backgroundColor = 'rgb(252, 139, 0)';
-            button.style.color = 'rgb(255, 255, 255)';
+            button.style.backgroundColor = 'rgb(252, 139, 0)'; // Default color
+            button.style.color = 'rgb(255, 255, 255)'; // Default text color
         });
     };
 
