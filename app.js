@@ -28,6 +28,7 @@ class State {
     addToHistory(calcObj) {
         // Create a new calculation object and add it to the history array
         this.history.push(new Calculation(calcObj.x, calcObj.op, calcObj.y, calcObj.result));
+        console.log(this.history)
     }
 }
 
@@ -35,8 +36,8 @@ class State {
 class Calculation {
     constructor(x = 0, op = '', y = 0, result = null) {
         this.x = x; // first operand
-        this.y = y; // second operand
         this.op = op; // operator
+        this.y = y; // second operand
         this.result = result; // result of the calculation
     }
 
@@ -128,8 +129,12 @@ class Calculation {
     }
 
     setY(number) {
-        this.y = number ? number : this.x;
+        this.y = number;
         return this.y
+    }
+
+    setNumber(number) {
+        this.op ? this.setY(number) : this.setX(number)
     }
 
     // Method to set the operator
@@ -138,12 +143,10 @@ class Calculation {
         return this.op
     }
 
-    // Method to reset the calculation object
-    reset() {
-        this.x = 0;
-        this.y = 0;
-        this.op = '';
-        this.result = null;
+    isCalcReady() {
+        if (this.x && this.y && this.op) return true
+
+        return false
     }
 }
 
@@ -167,29 +170,13 @@ const CalculatorController = () => {
         document.addEventListener("keydown", handleInput);
     };
 
+
+
 // Function to handle input events
 const handleInput = (event) => {
-    let inputType, inputText, inputStyle;
+    const { inputType, inputText, inputStyle } = normalizeInputEvent(event);
 
-    if (event.type === "click") {
-        const button = event.target;
-        inputType = getButtonType(button);
-        inputText = button.innerText;
-        inputStyle = getButtonStyle(button);
-    } else if (event.type === "keydown") {
-        const keyMap = {
-            '0': 'number', '1': 'number', '2': 'number', '3': 'number', '4': 'number',
-            '5': 'number', '6': 'number', '7': 'number', '8': 'number', '9': 'number',
-            '+': 'operator', '-': 'operator', '*': 'operator', '/': 'operator',
-            'Enter': 'equals', '=': 'equals', 'Escape': 'clear', 'c': 'clear'
-        };
-
-        inputType = keyMap[event.key];
-        if (!inputType) return;
-
-        inputText = event.key === 'Enter' ? '=' : event.key;
-        inputStyle = getButtonStyle(event.key);
-    }
+    if (!inputType) return;
 
     if (state.previousPress === "operator") {
         resetOperatorColor();
@@ -215,7 +202,36 @@ const handleInput = (event) => {
             handlePercent();
             break;
     }
+
+    console.log(currentCalculation)
+
     state.previousPress = inputType;
+};
+
+// Function to normalize the input event and return the type, text, and style
+const normalizeInputEvent = (event) => {
+    let inputType, inputText, inputStyle;
+
+    // Define key mapping for keydown events
+    const keyMap = {
+        '0': 'number', '1': 'number', '2': 'number', '3': 'number', '4': 'number',
+        '5': 'number', '6': 'number', '7': 'number', '8': 'number', '9': 'number',
+        '+': 'operator', '-': 'operator', '*': 'operator', '/': 'operator',
+        'Enter': 'equals', '=': 'equals', 'Escape': 'clear', 'c': 'clear'
+    };
+
+    if (event.type === "click") {
+        const button = event.target;
+        inputType = getButtonType(button);
+        inputText = button.innerText;
+        inputStyle = getButtonStyle(button);
+    } else if (event.type === "keydown" && keyMap[event.key]) {
+        inputType = keyMap[event.key];
+        inputText = event.key === 'Enter' ? '=' : event.key;
+        inputStyle = getButtonStyle(event.key);
+    }
+
+    return { inputType, inputText, inputStyle };
 };
 
     // Function to get the type of the button clicked
@@ -231,37 +247,47 @@ const handleInput = (event) => {
 
     // Function to get the style of the operator clicked
     const getButtonStyle = (button) => {
-        if ((button?.classList?.contains("plus") ?? false) || button === '+') return plusStyle;
-        if ((button?.classList?.contains("minus") ?? false) || button === '-') return minusStyle;
-        if ((button?.classList?.contains("multiply") ?? false) || button === '*') return multiplyStyle;
-        if ((button?.classList?.contains("divide") ?? false) || button === '/') return divideStyle;
+        if ((button.classList?.contains("plus") ?? false) || button === '+') return plusStyle;
+        if ((button.classList?.contains("minus") ?? false) || button === '-') return minusStyle;
+        if ((button.classList?.contains("multiply") ?? false) || button === '*') return multiplyStyle;
+        if ((button.classList?.contains("divide") ?? false) || button === '/') return divideStyle;
         return "";
     };
 
     // Function to handle number input
     // Uses closure to modify and access userInput array and state object
     const handleNumberInput = (buttonText) => {
-        // If the user input starts with zero or there is an error, reset the input
-        if (userInput[0] === 0 || state.err) {
+        // If there is an error, reset the input
+        if (state.err) {
             userInput.length = 0;
-        } else if (userInput[0] === '-' && userInput[1] === 0) {
-            // this just removes the the starting 0 when negative
-            userInput.pop();
-        }
+        } 
+        
         userInput.push(buttonText); // Add the new number to the input
 
-        if (currentCalculation.op) {
-            currentCalculation.setX(getNumber())
-        } else {
-            currentCalculation.setY(getNumber())
-        }
+        const fullInput = getNumber()
 
-        updateDisplay(userInput.join('')); // Update the display
+        currentCalculation.setNumber(fullInput)
+
+        updateDisplay(fullInput); // Update the display
     };
 
     // Function to handle operator input
     // Uses closure to modify and access currentCalculation and userInput array
     const handleOperatorInput = (buttonText, buttonStyle) => {
+
+        if (state.previousPress === "equals") {
+            currentCalculation.setX(state.getPreviousOutput())
+        }
+
+        // this if statement enables chaining of previous output with new operator
+        if (currentCalculation.isCalcReady()) {
+            const result = currentCalculation.calculate();
+            updateDisplay(result); // Update the display
+            state.addToHistory(currentCalculation); // Add the calculation to history
+            currentCalculation = new Calculation(); // Reset the current calculation
+            currentCalculation.x = state.getPreviousOutput();
+        }
+
         currentCalculation.setOperator(buttonText); // Set the operator
         userInput = []; // Reset user input
         
@@ -275,7 +301,7 @@ const handleInput = (event) => {
     const handleEqualsInput = () => {
         try {
             if (state.previousPress === "equals") {
-                currentCalculation.setX(state.getPreviousOutput(), state)
+                currentCalculation.setX(state.getPreviousOutput())
                 currentCalculation.setOperator(state.getPreviousOp())
                 currentCalculation.setY(state.getPreviousY())
             } 
@@ -311,7 +337,10 @@ const handleInput = (event) => {
         } else if (getNumber() >= 0) {
             userInput.unshift('-'); // Add the negative sign
         }
-        updateDisplay(userInput.join('')); // Update the display
+        const fullInput = getNumber()
+
+        currentCalculation.setNumber(fullInput)
+        updateDisplay(fullInput); // Update the display
         state.err = false; // Set error state to false
     };
 
@@ -319,18 +348,16 @@ const handleInput = (event) => {
     // Uses closure to modify and access userInput array and state object
     const handlePercent = () => {
         if (state.err) {
-            updateDisplay("Error");
+            return updateDisplay("Error");
         } else if (state.previousPress === "equals") {
             userInput = [currentCalculation.preciseDivide(state.getPreviousOutput(), 100, 10)]
-            updateDisplay(userInput.join())
         } else if (state.previousPress === "percent") {
-            userInput = [currentCalculation.preciseDivide(userInput.join(), 100, 10)]
-            updateDisplay(userInput.join())
+            userInput = [currentCalculation.preciseDivide(getNumber(), 100, 10)]
         } else {
-            userInput = [currentCalculation.preciseDivide(userInput.join(), 100, 10)]
-            updateDisplay(userInput.join('')); // Update the display
-            state.err = false;
+            userInput = [currentCalculation.preciseDivide(getNumber(), 100, 10)]
         }
+        updateDisplay(getNumber())
+        state.err = false;
     };
 
     // Function to get the number from user input
