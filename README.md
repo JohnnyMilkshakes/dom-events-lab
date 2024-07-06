@@ -1,20 +1,16 @@
 # Calculator Project
 
-This is a simple web-based calculator built using JavaScript, HTML, and CSS. The calculator supports basic arithmetic operations, undo/redo functionality, and a user-friendly interface.
+This is a web-based clone of the iPhone calculator built using JavaScript, HTML, and CSS. This calculator aims to perfectly mimic the look/feel and behavior of the default iPhone calculator.
 
 ## Table of Contents
 
 - [Features](#features)
 - [Installation](#installation)
 - [Usage](#usage)
-- [Project Structure](#project-structure)
-- [Contributing](#contributing)
-- [License](#license)
 
 ## Features
 
 - Basic arithmetic operations: addition, subtraction, multiplication, and division.
-- Undo and redo functionality.
 - Clear display functionality.
 - Responsive and user-friendly interface.
 
@@ -38,8 +34,11 @@ This is a simple web-based calculator built using JavaScript, HTML, and CSS. The
 2. You can interact with the calculator using the buttons on the screen or using your keyboard. The following keys are mapped to the calculator functionality:
 
 Numbers (0-9)
+
 Operators (+, -, *, /)
+
 Equals (Enter or =)
+
 Clear (Escape or c)
 
 
