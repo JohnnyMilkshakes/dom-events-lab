@@ -1,39 +1,69 @@
 // Class to manage the state of the calculator
 class State {
+    /** 
+     * Constructor to initialize the state
+     * @param {boolean} err - boolean to track if there is an error
+     * @param {string} previousPress - stores the last pressed button type
+     * @param {Array} history - array to store calculation history
+     */
     constructor(err = false, previousPress = '', history = []) {
         this.err = err; // boolean to track if there is an error
         this.history = history; // array to store calculation history
-        this.previousPress = previousPress;
+        this.previousPress = previousPress; // stores the last pressed button type
     }
 
+    /**
+     * Method to get the x value of the previous calculation
+     * @returns {number} - x value of the previous calculation or 0 if no history
+     */
     getPreviousX() {
         return this.history.length === 0 ? 0 : this.history[this.history.length - 1].x;
     }
 
+    /**
+     * Method to get the y value of the previous calculation
+     * @returns {number} - y value of the previous calculation or 0 if no history
+     */
     getPreviousY() {
         return this.history.length === 0 ? 0 : this.history[this.history.length - 1].y;
     }
 
+    /**
+     * Method to get the operator of the previous calculation
+     * @returns {string} - operator of the previous calculation or empty string if no history
+     */
     getPreviousOp() {
         return this.history.length === 0 ? '' : this.history[this.history.length - 1].op;
     }
 
-    // Method to get the result of the previous calculation
+    /**
+     * Method to get the result of the previous calculation
+     * @returns {number} - result of the previous calculation or 0 if no history
+     */
     getPreviousOutput() {
-        // If there is no history, return 0, otherwise return the result of the last calculation
         return this.history.length === 0 ? 0 : this.history[this.history.length - 1].result;
     }
 
-    // Method to add a new calculation to the history
+    /**
+     * Method to add a new calculation to the history
+     * @param {Object} calcObj - object containing x, op, y, and result of a calculation
+     */
     addToHistory(calcObj) {
-        // Create a new calculation object and add it to the history array
+        // Create a new Calculation object and add it to the history array
         this.history.push(new Calculation(calcObj.x, calcObj.op, calcObj.y, calcObj.result));
-        console.log(this.history)
+        console.log(this.history);
     }
 }
 
 // Class to create a calculation object
 class Calculation {
+    /**
+     * Constructor to initialize a calculation
+     * @param {number} x - first operand
+     * @param {string} op - operator
+     * @param {number} y - second operand
+     * @param {number|null} result - result of the calculation
+     */
     constructor(x = 0, op = '', y = 0, result = null) {
         this.x = x; // first operand
         this.op = op; // operator
@@ -41,7 +71,11 @@ class Calculation {
         this.result = result; // result of the calculation
     }
 
-    // Method to perform the calculation based on the operator
+    /**
+     * Method to perform the calculation based on the operator
+     * @returns {number} - result of the calculation
+     * @throws {Error} - if the operator is unknown
+     */
     calculate() {
         switch (this.op) {
             case '+': return this.add();
@@ -52,101 +86,117 @@ class Calculation {
         }
     }
 
-    // Method to perform addition
+    /**
+     * Method to perform addition
+     * @returns {number} - sum of x and y
+     */
     add() {
         this.result = this.x + this.y;
-        return this.result
+        return this.result;
     }
 
-    // Method to perform subtraction
+    /**
+     * Method to perform subtraction
+     * @returns {number} - difference of x and y
+     */
     sub() {
         this.result = this.x - this.y;
-        return this.result
+        return this.result;
     }
 
-    // Method to perform multiplication
+    /**
+     * Method to perform multiplication
+     * @returns {number} - product of x and y
+     */
     mul() {
         this.result = this.x * this.y;
-        return this.result
+        return this.result;
     }
 
-    // Method to perform division
+    /**
+     * Method to perform division
+     * @returns {number} - quotient of x and y
+     * @throws {Error} - if division by zero occurs
+     */
     div() {
         if (this.y === 0) {
             throw new Error("Division by zero");
         }
 
+        // If both operands are integers, perform normal division
         if (Number.isInteger(this.x) && Number.isInteger(this.y)) {
             this.result = this.x / this.y;
         } else {
-            this.result = this.preciseDivide(this.x, this.y, 10)
+            // Use precise division for floating-point numbers
+            this.result = this.preciseDivide(this.x, this.y, 10);
         }
 
-        return this.result
+        return this.result;
     }
 
-    /*
-        The preciseDivide function is designed to handle division operations with higher precision,
-        mitigating the common issue of floating-point arithmetic errors. 
-        JavaScript's native handling of floating-point numbers can lead to imprecise results, 
-        especially when dealing with very small or very large numbers. 
-        The preciseDivide function aims to address this by scaling the numbers to integers 
-        before performing the division, thus avoiding the precision loss that can occur 
-        with floating-point arithmetic.
-
-        How to Use:
-
-        To use the preciseDivide function, you need to provide three parameters:
-
-        a: The numerator (the number to be divided).
-        b: The denominator (the number by which the numerator is to be divided).
-        precision: The number of decimal places to be used for scaling the numbers to integers. 
-    */
+    /**
+     * The preciseDivide function is designed to handle division operations with higher precision,
+     * mitigating the common issue of floating-point arithmetic errors.
+     * It scales the numbers to integers before performing the division to avoid precision loss.
+     * 
+     * @param {number} a - The numerator (the number to be divided).
+     * @param {number} b - The denominator (the number by which the numerator is to be divided).
+     * @param {number} precision - The number of decimal places to be used for scaling the numbers to integers.
+     * @returns {number} - Result of the division with higher precision
+     */
     preciseDivide(a, b, precision) {
-        // Determine a scaling factor based on the desired precision. 
-        // e.g., for precision 10, factor = 10^10 = 10000000000.
-        const factor = Math.pow(10, precision);
-    
-        // Scale the numerator (a) and denominator (b) by the factor and round them.
-        // This converts them to integers to avoid floating-point precision issues.
-        // Math.round(a * factor) scales 'a' and rounds it to the nearest integer.
-        // Math.round(b * factor) scales 'b' and rounds it to the nearest integer.
-        const scaledA = Math.round(a * factor);
-        const scaledB = Math.round(b * factor);
-    
-        // Perform the division on the scaled and rounded values to get a precise result.
-        // Since both scaledA and scaledB are integers, this avoids precision issues.
-        const answer = scaledA / scaledB;
-    
-        // Return the result of the division.
-        // The result is already scaled down appropriately because we divided scaledA by scaledB.
-        return answer;
+        const factor = Math.pow(10, precision); // Scaling factor based on precision
+        const scaledA = Math.round(a * factor); // Scale and round the numerator
+        const scaledB = Math.round(b * factor); // Scale and round the denominator
+        const answer = scaledA / scaledB; // Perform division on scaled values
+        return answer; // Return the precise result
     }
 
+    /**
+     * Method to set the x value
+     * @param {number} number - value to set as x
+     * @returns {number} - updated x value
+     */
     setX(number) {
         this.x = number;
-        return this.x
+        return this.x;
     }
 
+    /**
+     * Method to set the y value
+     * @param {number} number - value to set as y
+     * @returns {number} - updated y value
+     */
     setY(number) {
         this.y = number;
-        return this.y
+        return this.y;
     }
 
+    /**
+     * Method to set either x or y value based on the operator
+     * @param {number} number - value to set as x or y
+     */
     setNumber(number) {
-        this.op ? this.setY(number) : this.setX(number)
+        this.op ? this.setY(number) : this.setX(number);
     }
 
-    // Method to set the operator
+    /**
+     * Method to set the operator
+     * @param {string} operator - operator to set
+     * @returns {string} - updated operator
+     */
     setOperator(operator) {
         this.op = operator;
-        return this.op
+        return this.op;
     }
 
+    /**
+     * Method to check if the calculation is ready to be performed
+     * @returns {boolean} - true if x, y, and op are set, false otherwise
+     */
     isCalcReady() {
-        if (this.x && this.y && this.op) return true
-
-        return false
+        if (this.x && this.y && this.op) return true;
+        return false;
     }
 }
 
@@ -163,78 +213,91 @@ const CalculatorController = () => {
     const multiplyStyle = document.querySelector(".multiply").style;
     const divideStyle = document.querySelector(".divide").style;
 
-    // Function to initialize event listeners
+    /**
+     * Function to initialize event listeners
+     */
     const initEventListeners = () => {
         const calculator = document.querySelector("#calculator");
         calculator.addEventListener("click", handleInput);
         document.addEventListener("keydown", handleInput);
     };
 
+    /**
+     * Function to handle input events
+     * @param {Event} event - input event (click or keydown)
+     */
+    const handleInput = (event) => {
+        const { inputType, inputText, inputStyle } = normalizeInputEvent(event);
 
+        if (!inputType) return;
 
-// Function to handle input events
-const handleInput = (event) => {
-    const { inputType, inputText, inputStyle } = normalizeInputEvent(event);
+        if (state.previousPress === "operator") {
+            resetOperatorColor();
+        }
 
-    if (!inputType) return;
+        switch (inputType) {
+            case "number":
+                handleNumberInput(inputText);
+                break;
+            case "operator":
+                handleOperatorInput(inputText, inputStyle);
+                break;
+            case "equals":
+                handleEqualsInput();
+                break;
+            case "clear":
+                handleClear();
+                break;
+            case "negate":
+                handleNegate();
+                break;
+            case "percent":
+                handlePercent();
+                break;
+        }
 
-    if (state.previousPress === "operator") {
-        resetOperatorColor();
-    }
+        console.log(currentCalculation);
 
-    switch (inputType) {
-        case "number":
-            handleNumberInput(inputText);
-            break;
-        case "operator":
-            handleOperatorInput(inputText, inputStyle);
-            break;
-        case "equals":
-            handleEqualsInput();
-            break;
-        case "clear":
-            handleClear();
-            break;
-        case "negate":
-            handleNegate();
-            break;
-        case "percent":
-            handlePercent();
-            break;
-    }
-
-    console.log(currentCalculation)
-
-    state.previousPress = inputType;
-};
-
-// Function to normalize the input event and return the type, text, and style
-const normalizeInputEvent = (event) => {
-    let inputType, inputText, inputStyle;
-
-    // Define key mapping for keydown events
-    const keyMap = {
-        '0': 'number', '1': 'number', '2': 'number', '3': 'number', '4': 'number',
-        '5': 'number', '6': 'number', '7': 'number', '8': 'number', '9': 'number',
-        '+': 'operator', '-': 'operator', '*': 'operator', '/': 'operator',
-        'Enter': 'equals', '=': 'equals', 'Escape': 'clear', 'c': 'clear'
+        state.previousPress = inputType;
     };
 
-    if (event.type === "click") {
-        const button = event.target;
-        inputType = getButtonType(button);
-        inputText = button.innerText;
-        inputStyle = getButtonStyle(button);
-    } else if (event.type === "keydown" && keyMap[event.key]) {
-        inputType = keyMap[event.key];
-        inputText = event.key === 'Enter' ? '=' : event.key;
-        inputStyle = getButtonStyle(event.key);
-    }
+    /**
+     * Function to normalize the input event and return the type, text, and style
+     * @param {Event} event - input event (click or keydown)
+     * @returns {Object} - normalized input event details
+     */
+    const normalizeInputEvent = (event) => {
+        let buttonElement, keyPress, inputType, inputText, inputStyle;
 
-    return { inputType, inputText, inputStyle };
-};
+        buttonElement = event.type === "click" ? event.target : null
+        keyPress = event.type === "keydown" ? event.key : null
 
-    // Function to get the type of the button clicked
+        // Define key mapping for keydown events
+        const keyMap = {
+            '0': 'number', '1': 'number', '2': 'number', '3': 'number', '4': 'number',
+            '5': 'number', '6': 'number', '7': 'number', '8': 'number', '9': 'number',
+            '+': 'operator', '-': 'operator', '*': 'operator', '/': 'operator',
+            'Enter': 'equals', '=': 'equals', 'Escape': 'clear', 'c': 'clear'
+        };
+
+        if (event.type === "click") {
+            inputText = buttonElement.innerText;
+        } else if (event.type === "keydown" && keyMap[keyPress]) {
+            inputText = keyPress === 'Enter' ? '=' : keyPress;
+        }
+
+        inputType = event.type === "click" ?  getButtonType(buttonElement) : keyMap[keyPress];
+
+        inputStyle = getButtonStyle(buttonElement || keyPress);
+
+        return { inputType, inputText, inputStyle };
+    };
+
+    /**
+     * Function to get the type of the button clicked
+     * @param {HTMLElement} button - clicked button element
+     * @returns {string} - type of the button
+     */
     const getButtonType = (button) => {
         if (button.classList.contains("number")) return "number";
         if (button.classList.contains("operator")) return "operator";
@@ -245,41 +308,48 @@ const normalizeInputEvent = (event) => {
         return "";
     };
 
-    // Function to get the style of the operator clicked
+    /**
+     * Function to get the style of the operator clicked
+     * @param {HTMLElement|string} button - clicked button element or key
+     * @returns {CSSStyleDeclaration} - style of the operator button
+     */
     const getButtonStyle = (button) => {
-        if ((button.classList?.contains("plus") ?? false) || button === '+') return plusStyle;
-        if ((button.classList?.contains("minus") ?? false) || button === '-') return minusStyle;
-        if ((button.classList?.contains("multiply") ?? false) || button === '*') return multiplyStyle;
-        if ((button.classList?.contains("divide") ?? false) || button === '/') return divideStyle;
+        if ((button?.classList?.contains("plus") ?? false) || button === '+') return plusStyle;
+        if ((button?.classList?.contains("minus") ?? false) || button === '-') return minusStyle;
+        if ((button?.classList?.contains("multiply") ?? false) || button === '*') return multiplyStyle;
+        if ((button?.classList?.contains("divide") ?? false) || button === '/') return divideStyle;
         return "";
     };
 
-    // Function to handle number input
-    // Uses closure to modify and access userInput array and state object
+    /**
+     * Function to handle number input
+     * @param {string} buttonText - text of the button clicked or key pressed
+     */
     const handleNumberInput = (buttonText) => {
-        // If there is an error, reset the input
         if (state.err) {
-            userInput.length = 0;
-        } 
-        
+            userInput.length = 0; // If there is an error, reset the input
+        }
+
         userInput.push(buttonText); // Add the new number to the input
 
-        const fullInput = getNumber()
+        const fullInput = getNumber();
 
-        currentCalculation.setNumber(fullInput)
+        currentCalculation.setNumber(fullInput);
 
         updateDisplay(fullInput); // Update the display
     };
 
-    // Function to handle operator input
-    // Uses closure to modify and access currentCalculation and userInput array
+    /**
+     * Function to handle operator input
+     * @param {string} buttonText - text of the button clicked or key pressed
+     * @param {CSSStyleDeclaration} buttonStyle - style of the operator button
+     */
     const handleOperatorInput = (buttonText, buttonStyle) => {
-
         if (state.previousPress === "equals") {
-            currentCalculation.setX(state.getPreviousOutput())
+            currentCalculation.setX(state.getPreviousOutput());
         }
 
-        // this if statement enables chaining of previous output with new operator
+        // This if statement enables chaining of previous output with new operator
         if (currentCalculation.isCalcReady()) {
             const result = currentCalculation.calculate();
             updateDisplay(result); // Update the display
@@ -290,21 +360,21 @@ const normalizeInputEvent = (event) => {
 
         currentCalculation.setOperator(buttonText); // Set the operator
         userInput = []; // Reset user input
-        
+
         buttonStyle.backgroundColor = 'white'; // Highlight the operator button
         buttonStyle.color = 'orange';
-        
     };
 
-    // Function to handle equals input
-    // Uses closure to modify and access currentCalculation, state, and userInput
+    /**
+     * Function to handle equals input
+     */
     const handleEqualsInput = () => {
         try {
             if (state.previousPress === "equals") {
-                currentCalculation.setX(state.getPreviousOutput())
-                currentCalculation.setOperator(state.getPreviousOp())
-                currentCalculation.setY(state.getPreviousY())
-            } 
+                currentCalculation.setX(state.getPreviousOutput());
+                currentCalculation.setOperator(state.getPreviousOp());
+                currentCalculation.setY(state.getPreviousY());
+            }
             const result = currentCalculation.calculate(); // Perform the calculation
             updateDisplay(result); // Update the display
             state.addToHistory(currentCalculation); // Add the calculation to history
@@ -316,8 +386,9 @@ const normalizeInputEvent = (event) => {
         }
     };
 
-    // Function to handle clear input
-    // Uses closure to reset userInput, state, and currentCalculation
+    /**
+     * Function to handle clear input
+     */
     const handleClear = () => {
         userInput = [0]; // Reset user input
         updateDisplay('0'); // Update the display
@@ -325,53 +396,61 @@ const normalizeInputEvent = (event) => {
         currentCalculation = new Calculation(); // Reset the current calculation
     };
 
-    // Function to handle negate input
-    // Uses closure to modify and access userInput array and state object
+    /**
+     * Function to handle negate input
+     */
     const handleNegate = () => {
-
         if (state.previousPress === "equals") {
-            userInput = [state.getPreviousOutput()]
-            userInput.unshift('-')
+            userInput = [state.getPreviousOutput()];
+            userInput.unshift('-');
         } else if (userInput[0] === '-') {
             userInput.shift(); // Remove the negative sign
         } else if (getNumber() >= 0) {
             userInput.unshift('-'); // Add the negative sign
         }
-        const fullInput = getNumber()
+        const fullInput = getNumber();
 
-        currentCalculation.setNumber(fullInput)
+        currentCalculation.setNumber(fullInput);
         updateDisplay(fullInput); // Update the display
         state.err = false; // Set error state to false
     };
 
-    // Function to handle percent input
-    // Uses closure to modify and access userInput array and state object
+    /**
+     * Function to handle percent input
+     */
     const handlePercent = () => {
         if (state.err) {
             return updateDisplay("Error");
         } else if (state.previousPress === "equals") {
-            userInput = [currentCalculation.preciseDivide(state.getPreviousOutput(), 100, 10)]
+            userInput = [currentCalculation.preciseDivide(state.getPreviousOutput(), 100, 10)];
         } else if (state.previousPress === "percent") {
-            userInput = [currentCalculation.preciseDivide(getNumber(), 100, 10)]
+            userInput = [currentCalculation.preciseDivide(getNumber(), 100, 10)];
         } else {
-            userInput = [currentCalculation.preciseDivide(getNumber(), 100, 10)]
+            userInput = [currentCalculation.preciseDivide(getNumber(), 100, 10)];
         }
-        updateDisplay(getNumber())
+        updateDisplay(getNumber());
         state.err = false;
     };
 
-    // Function to get the number from user input
-    // Uses closure to access userInput array
+    /**
+     * Function to get the number from user input
+     * @returns {number} - number from user input array
+     */
     const getNumber = () => {
         return userInput.length === 0 ? 0 : parseFloat(userInput.join(''));
     };
 
-    // Function to update the display
+    /**
+     * Function to update the display
+     * @param {number|string} input - input to display
+     */
     const updateDisplay = (input) => {
         display.innerText = input;
     };
 
-    // Function to reset operator button colors
+    /**
+     * Function to reset operator button colors
+     */
     const resetOperatorColor = () => {
         operators.forEach((button) => {
             button.style.backgroundColor = 'rgb(252, 139, 0)'; // Default color
@@ -381,14 +460,12 @@ const normalizeInputEvent = (event) => {
 
     // Initialize the event listeners
     initEventListeners();
-
 };
 
 /*-------------------------------- Initialize Calculator --------------------------------*/
 
 // Initialize the calculator controller
 CalculatorController();
-
 
 
 
