@@ -227,7 +227,7 @@ const CalculatorController = () => {
      * @param {Event} event - input event (click or keydown)
      */
     const handleInput = (event) => {
-        const { inputType, inputText, inputStyle } = normalizeInputEvent(event);
+        const { inputType, inputText, inputStyle } = normalizeInput(event);
 
         if (!inputType) return;
 
@@ -266,47 +266,52 @@ const CalculatorController = () => {
      * @param {Event} event - input event (click or keydown)
      * @returns {Object} - normalized input event details
      */
-    const normalizeInputEvent = (event) => {
+    const normalizeInput = (event) => {
         let buttonElement, keyPress, inputType, inputText, inputStyle;
 
         buttonElement = event.type === "click" ? event.target : null
         keyPress = event.type === "keydown" ? event.key : null
 
-        // Define key mapping for keydown events
-        const keyMap = {
-            '0': 'number', '1': 'number', '2': 'number', '3': 'number', '4': 'number',
-            '5': 'number', '6': 'number', '7': 'number', '8': 'number', '9': 'number',
-            '+': 'operator', '-': 'operator', '*': 'operator', '/': 'operator',
-            'Enter': 'equals', '=': 'equals', 'Escape': 'clear', 'c': 'clear'
-        };
+        inputText = getButtonText(buttonElement || keyPress);
 
-        if (event.type === "click") {
-            inputText = buttonElement.innerText;
-        } else if (event.type === "keydown" && keyMap[keyPress]) {
-            inputText = keyPress === 'Enter' ? '=' : keyPress;
-        }
-
-        inputType = event.type === "click" ?  getButtonType(buttonElement) : keyMap[keyPress];
+        inputType = getButtonClassName(buttonElement || keyPress); 
 
         inputStyle = getButtonStyle(buttonElement || keyPress);
 
         return { inputType, inputText, inputStyle };
     };
 
-    /**
-     * Function to get the type of the button clicked
-     * @param {HTMLElement} button - clicked button element
+  /**
+     * Function to get the text of the button clicked
+     * @param {HTMLElement|string} button - clicked button element or key
      * @returns {string} - type of the button
      */
-    const getButtonType = (button) => {
-        if (button.classList.contains("number")) return "number";
-        if (button.classList.contains("operator")) return "operator";
-        if (button.classList.contains("equals")) return "equals";
-        if (button.classList.contains("clear")) return "clear";
-        if (button.classList.contains("negate")) return "negate";
-        if (button.classList.contains("percent")) return "percent";
-        return "";
-    };
+  const getButtonText = (buttonElementOrKeyPress) => {
+    return buttonElementOrKeyPress.innerText || buttonElementOrKeyPress;
+};
+
+    /**
+     * Function to get the type of the button clicked
+     * @param {HTMLElement|string} button - clicked button element or key
+     * @returns {string} - type of the button
+     */
+    const getButtonClassName = (button) => {
+        const keyMap = {
+          '0': 'number', '1': 'number', '2': 'number', '3': 'number', '4': 'number',
+          '5': 'number', '6': 'number', '7': 'number', '8': 'number', '9': 'number',
+          '+': 'operator', '-': 'operator', '*': 'operator', '/': 'operator',
+          'Enter': 'equals', '=': 'equals', 'Escape': 'clear', 'c': 'clear'
+        };
+      
+        const classTypes = ['number', 'operator', 'equals', 'clear', 'negate', 'percent'];
+        
+        if (button.classList) {
+          return classTypes.find(type => button.classList.contains(type)) || '';
+        } else {
+          return keyMap[button] || '';
+        }
+      };
+      
 
     /**
      * Function to get the style of the operator clicked
@@ -328,6 +333,7 @@ const CalculatorController = () => {
     const handleNumberInput = (buttonText) => {
         if (state.err) {
             userInput.length = 0; // If there is an error, reset the input
+            state.err = false
         }
 
         userInput.push(buttonText); // Add the new number to the input
@@ -359,7 +365,7 @@ const CalculatorController = () => {
         }
 
         currentCalculation.setOperator(buttonText); // Set the operator
-        userInput = []; // Reset user input
+        userInput.length = 0; // Reset user input
 
         buttonStyle.backgroundColor = 'white'; // Highlight the operator button
         buttonStyle.color = 'orange';
@@ -658,7 +664,7 @@ CalculatorController();
 
 //     // Function to handle button clicks
 //     const handleButtonClick = (event) => {
-//         const buttonType = getButtonType(event.target);
+//         const buttonType = getButtonClassName(event.target);
 //         const buttonText = event.target.innerText;
 //         const buttonStyle = getButtonStyle(event.target)
 //         handleInput(buttonType, buttonText, buttonStyle);
@@ -683,7 +689,7 @@ CalculatorController();
 //     };
 
 //     // Function to get the type of the button clicked
-//     const getButtonType = (button) => {
+//     const getButtonClassName = (button) => {
 //         if (button.classList.contains("number")) return "number";
 //         if (button.classList.contains("operator")) return "operator";
 //         if (button.classList.contains("equals")) return "equals";
@@ -939,7 +945,7 @@ CalculatorController();
 //     }
 
 //     handleButtonClick(event) {
-//         const buttonType = this.getButtonType(event.target);
+//         const buttonType = this.getButtonClassName(event.target);
 //         const buttonText = event.target.innerText;
 //         this.resetOperatorColor()
 
@@ -954,7 +960,7 @@ CalculatorController();
 //         }
 //     }
 
-//     getButtonType(button) {
+//     getButtonClassName(button) {
 //         if (button.classList.contains("number")) return "number";
 //         if (button.classList.contains("operator")) return "operator";
 //         if (button.classList.contains("equals")) return "equals";
