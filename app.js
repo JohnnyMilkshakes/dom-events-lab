@@ -1,19 +1,13 @@
 import  { State }  from './state.js';
+import  { normalizeInput, getNumber, updateDisplay, resetOperatorColor }  from './utils.js';
 import  { Calculation }  from './calculation.js';
-
 
 // CalculatorController function to manage the calculator's operations and UI
 // This function is a closure that encapsulates the calculator state and logic
-const CalculatorController = () => {
+// (function() {
     let state = new State(); // Initialize state
     let currentCalculation = new Calculation(); // Initialize current calculation object
     let userInput = [0]; // Array to store user input
-    const display = document.querySelector(".display"); // Display element
-    const operators = document.querySelectorAll(".operator"); // Operator buttons
-    const plusStyle = document.querySelector(".plus").style;
-    const minusStyle = document.querySelector(".minus").style;
-    const multiplyStyle = document.querySelector(".multiply").style;
-    const divideStyle = document.querySelector(".divide").style;
 
     /**
      * Function to initialize event listeners
@@ -33,99 +27,18 @@ const CalculatorController = () => {
 
         if (!inputType) return;
 
-        if (state.previousPress === "operator") {
-            resetOperatorColor();
-        }
+        if (state.previousPress === "operator") resetOperatorColor();
 
-        switch (inputType) {
-            case "number":
-                handleNumberInput(inputText);
-                break;
-            case "operator":
-                handleOperatorInput(inputText, inputStyle);
-                break;
-            case "equals":
-                handleEqualsInput();
-                break;
-            case "clear":
-                handleClear();
-                break;
-            case "negate":
-                handleNegate();
-                break;
-            case "percent":
-                handlePercent();
-                break;
-        }
+        if (inputType === "number") handleNumberInput(inputText);
+        if (inputType === "operator") handleOperatorInput(inputText, inputStyle);
+        if (inputType === "equals") handleEqualsInput();
+        if (inputType === "clear") handleClear();
+        if (inputType === "negate") handleNegate();
+        if (inputType === "percent") handlePercent();
 
         console.log(currentCalculation);
 
         state.previousPress = inputType;
-    };
-
-    /**
-     * Function to normalize the input event and return the type, text, and style
-     * @param {Event} event - input event (click or keydown)
-     * @returns {Object} - normalized input event details
-     */
-    const normalizeInput = (event) => {
-        let buttonElement, keyPress, inputType, inputText, inputStyle;
-
-        buttonElement = event.type === "click" ? event.target : null
-        keyPress = event.type === "keydown" ? event.key : null
-
-        inputText = getButtonText(buttonElement || keyPress);
-
-        inputType = getButtonClassName(buttonElement || keyPress); 
-
-        inputStyle = getButtonStyle(buttonElement || keyPress);
-
-        return { inputType, inputText, inputStyle };
-    };
-
-  /**
-     * Function to get the text of the button clicked
-     * @param {HTMLElement|string} button - clicked button element or key
-     * @returns {string} - type of the button
-     */
-  const getButtonText = (buttonElementOrKeyPress) => {
-    return buttonElementOrKeyPress.innerText || buttonElementOrKeyPress;
-};
-
-    /**
-     * Function to get the type of the button clicked
-     * @param {HTMLElement|string} button - clicked button element or key
-     * @returns {string} - type of the button
-     */
-    const getButtonClassName = (button) => {
-        const keyMap = {
-          '0': 'number', '1': 'number', '2': 'number', '3': 'number', '4': 'number',
-          '5': 'number', '6': 'number', '7': 'number', '8': 'number', '9': 'number',
-          '+': 'operator', '-': 'operator', '*': 'operator', '/': 'operator',
-          'Enter': 'equals', '=': 'equals', 'Escape': 'clear', 'c': 'clear'
-        };
-      
-        const classTypes = ['number', 'operator', 'equals', 'clear', 'negate', 'percent'];
-        
-        if (button.classList) {
-          return classTypes.find(type => button.classList.contains(type)) || '';
-        } else {
-          return keyMap[button] || '';
-        }
-      };
-      
-
-    /**
-     * Function to get the style of the operator clicked
-     * @param {HTMLElement|string} button - clicked button element or key
-     * @returns {CSSStyleDeclaration} - style of the operator button
-     */
-    const getButtonStyle = (button) => {
-        if (button?.classList?.contains("plus") || button === '+') return plusStyle;
-        if (button?.classList?.contains("minus") || button === '-') return minusStyle;
-        if (button?.classList?.contains("multiply") || button === '*') return multiplyStyle;
-        if (button?.classList?.contains("divide") || button === '/') return divideStyle;
-        return "";
     };
 
     /**
@@ -140,7 +53,7 @@ const CalculatorController = () => {
 
         userInput.push(buttonText); // Add the new number to the input
 
-        const fullInput = getNumber();
+        const fullInput = getNumber(userInput);
 
         currentCalculation.setNumber(fullInput);
 
@@ -213,10 +126,10 @@ const CalculatorController = () => {
             userInput.unshift('-');
         } else if (userInput[0] === '-') {
             userInput.shift(); // Remove the negative sign
-        } else if (getNumber() >= 0) {
+        } else if (getNumber(userInput) >= 0) {
             userInput.unshift('-'); // Add the negative sign
         }
-        const fullInput = getNumber();
+        const fullInput = getNumber(userInput);
 
         currentCalculation.setNumber(fullInput);
         updateDisplay(fullInput); // Update the display
@@ -232,49 +145,15 @@ const CalculatorController = () => {
         } else if (state.previousPress === "equals") {
             userInput = [currentCalculation.preciseDivide(state.getPreviousOutput(), 100, 10)];
         } else if (state.previousPress === "percent") {
-            userInput = [currentCalculation.preciseDivide(getNumber(), 100, 10)];
+            userInput = [currentCalculation.preciseDivide(getNumber(userInput), 100, 10)];
         } else {
-            userInput = [currentCalculation.preciseDivide(getNumber(), 100, 10)];
+            userInput = [currentCalculation.preciseDivide(getNumber(userInput), 100, 10)];
         }
-        updateDisplay(getNumber());
+        updateDisplay(getNumber(userInput));
         state.err = false;
     };
 
-    /**
-     * Function to get the number from user input
-     * @returns {number} - number from user input array
-     */
-    const getNumber = () => {
-        return userInput.length === 0 ? 0 : parseFloat(userInput.join(''));
-    };
-
-    /**
-     * Function to update the display
-     * @param {number|string} input - input to display
-     */
-    const updateDisplay = (input) => {
-        display.innerText = input;
-    };
-
-    /**
-     * Function to reset operator button colors
-     */
-    const resetOperatorColor = () => {
-        operators.forEach((button) => {
-            button.style.backgroundColor = 'rgb(252, 139, 0)'; // Default color
-            button.style.color = 'rgb(255, 255, 255)'; // Default text color
-        });
-    };
-
-    // Initialize the event listeners
     initEventListeners();
-};
-
-/*-------------------------------- Initialize Calculator --------------------------------*/
-
-// Initialize the calculator controller
-CalculatorController();
-
 
 
 
